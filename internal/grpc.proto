@@ -1,0 +1,192 @@
+syntax="proto3";
+
+//package grpc;
+
+option go_package = "./forwarder;forwarder";
+
+
+
+message Request
+{
+    string request = 1;
+}
+
+message Response
+{
+    string response = 1;
+}
+//-----------
+message SrcIfLookupTableKey {
+    string dst_addr = 1;
+    uint32 dst_addr_prefix_len = 2;
+}
+
+message SrcIfLookupTableData{
+     enum ActionName{
+         set_source_iface=0;
+     }
+
+     message ActionSetSourceIface{
+        uint32 src_iface = 1;
+        uint32 direction = 2;
+     }
+     ActionName action = 1;
+     ActionSetSourceIface SrcIfLookup_action_1 = 2;
+}
+
+message CreateSrcIfLookTableRequest {
+    SrcIfLookupTableKey key = 1;
+    SrcIfLookupTableData data= 2;
+}
+
+// -------------------
+message MyStationTableKey{
+    string dst_mac = 1;
+}
+
+message MyStationTableData{
+     enum ActionName{
+        no_action=0;
+     }
+     ActionName action = 1;
+}
+message CreateMyStationTableRequest {
+    MyStationTableKey key = 1; // NoAction
+    MyStationTableData data= 2;
+}
+// ---------------------
+message RouteTableKey{
+    string next_hop_ip = 1;
+    uint32 next_hop_ip_prefix_len = 2;
+}
+
+message RouteTableData{
+    enum ActionName{
+        route = 0;
+    }
+    message ActionRoute{
+        string src_mac = 1;
+        string dst_mac = 2;
+        uint32 egress_port = 3;
+    }
+    ActionName action = 1;
+    ActionRoute route_action_1 = 2;
+
+}
+
+message CreateRouteTableRequest {
+    RouteTableKey   key = 1;
+    RouteTableData data= 2;
+}
+// ------------------
+message PDRTableKey{
+    uint32 src_iface = 1;       // local_meta.src_iface, excat, uint
+    string tunnel_ipv4_dst = 2; // hdr.outer_ipv4.dst_addr, ternary, ipv4
+    string tunnel_ipv4_dst_mask = 3; // hdr.outer_ipv4.dst_addr mask，目前先用int代替
+    uint32 teid = 4;           // local_meta.teid, ternary
+    uint32 teid_mask = 5;       // local_meta.teid mask,目前先用int代替
+    string ue_addr = 6;         // local_meta.ue_addr, ternary
+    string ue_addr_mask = 7;    //  local_meta.ue_addr mask, 目前先用int代替
+    string inet_addr = 8;       // local_meta.inet_addr,ternary
+    string inet_addr_mask = 9;   // local_meta.inet_addr mask, 目前先用int代替
+    uint32 ue_l4_port_low = 10;      // local_meta.ue_l4_port, low range
+    uint32 ue_l4_port_high = 11;   // local_meta.ue_l4_port, high range
+    uint32 inet_l4_port_low = 12;    // local_meta.inet_l4_port, low range
+    uint32 inet_l4_port_high = 13;   // local_meta.inet_l4_port, high range
+    uint32 ipv4_proto = 14;      // hdr.ipv4.proto, ternary
+    uint32 ipv4_proto_mask = 15; // hdr.ipv4.proto mask, ternary
+    bool has_qfi =16;          // hdr.gtpu_ext_psc.isValid(), ternary
+    uint32 has_qfi_mask = 17;
+    uint32 qfi = 18;           // hdr.gtpu_ext_psc.qfi, ternary
+    uint32 qfi_mask = 19;
+    uint32 priority = 20; // 三态匹配优先级
+}
+
+message PDRTableData{ // action set_pdr_attributes
+    enum ActionName
+    {
+        set_pdr_attributes=0;
+        set_pdr_attributes_qos=1;
+    }
+
+    message ActionSetPDRAttributes
+    {
+        uint32 pdr_id = 1;
+        uint32 fseid = 2;
+        //uint32 counter_index = ;
+        uint32 far_id = 3;
+        bool needs_gtpu_decap = 4;
+    }
+
+    message ActionSetPDRAttributesQos
+    {
+        uint32 pdr_id = 1;
+        uint32 fseid = 2;
+        //uint32 counter_index = ;
+        uint32 far_id = 3;
+        bool needs_gtpu_decap = 4;
+        bool needs_qfi_push = 5;
+        uint32 qfi = 6;
+    }
+    ActionName action = 1;
+    ActionSetPDRAttributes pdr_action_1 = 2;
+    ActionSetPDRAttributesQos pdr_action_2 = 3;
+
+}
+
+message CreatePDRRequest
+{
+    PDRTableKey key = 1;
+    PDRTableData data =2;
+}
+// ---------------------------
+
+message FARTableKey{
+    uint32 far_id = 1;       //local_meta.far.id
+    uint32 fseid = 2; // local_meta.fseid
+}
+
+message FARTableData{
+    enum ActionName
+    {
+        load_normal_far_attributes=0;
+        load_tunnel_far_attributes=1;
+    }
+    message ActionLoadNormalFarAttributes{
+        bool needs_dropping = 1;
+        bool notify_cp = 2;
+    }
+    message ActionLoadTunnelFarAttributes{
+        bool needs_dropping = 1;
+        bool notify_cp = 2;
+        bool needs_buffering = 3;
+        uint32 tunnel_type = 4;
+        string src_addr = 5;
+        string dst_addr = 6;
+        uint32 teid = 7;
+        uint32 L4Port = 8;
+    }
+    ActionName action = 1;
+    ActionLoadNormalFarAttributes far_action_1 = 2;
+    ActionLoadTunnelFarAttributes far_action_2 = 3;
+}
+
+message CreateFARRequest
+{
+    FARTableKey key = 1;
+    FARTableData data =2;
+}
+
+service GrpcService {
+    rpc SayHello (Request) returns (Response);
+    rpc CreateSrcIfaceLook(CreateSrcIfLookTableRequest) returns (Response);
+    rpc CreateMyStation(CreateMyStationTableRequest) returns (Response);
+    rpc CreateRoute(CreateRouteTableRequest) returns (Response);
+    rpc CreatePDR (CreatePDRRequest) returns (Response);
+    rpc UpdatePDR (Request) returns (Response);
+    rpc RemovePDR (Request) returns (Response);
+    rpc CreateFAR (CreateFARRequest) returns (Response);
+    rpc UpdateFAR (Request) returns (Response);
+    rpc RemoveFAR (Request) returns (Response);
+}
+

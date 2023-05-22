@@ -1,0 +1,47 @@
+package forwarder
+
+import (
+	"context"
+	"time"
+
+	"google.golang.org/grpc"
+)
+
+type grpcService struct {
+}
+
+func (g grpcService) SayHello(ctx context.Context, in *Request, opts ...grpc.CallOption) (*HelloWorldResponse, error) {
+	time.Sleep(time.Second)
+	reply := &HelloWorldResponse{Result: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) CreatePDR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) UpdatePDR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) RemovePDR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) CreateFAR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) UpdateFAR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
+func (g grpcService) RemoveFAR(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	time.Sleep(time.Second)
+	reply := &Response{Response: []byte("helloworld")}
+	return reply, nil
+}
